@@ -1,7 +1,9 @@
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
+const cors = require("cors");
 app.use(express.json());
+app.use(cors());
 
 morgan.token("new-person", (req) => {
   if (req.method === "POST" && req.body) {
@@ -16,7 +18,7 @@ app.use(
   )
 );
 
-morgan.token()
+morgan.token();
 
 let persons = [
   {
