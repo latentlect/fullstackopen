@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
@@ -5,6 +6,8 @@ const cors = require("cors");
 app.use(express.json());
 app.use(cors());
 app.use(express.static("dist"));
+
+const Person = require("./models/person");
 
 morgan.token("new-person", (req) => {
   if (req.method === "POST" && req.body) {
@@ -45,7 +48,9 @@ let persons = [
 ];
 
 app.get("/api/persons", (resquest, response) => {
-  response.json(persons);
+  Person.find({}).then((persons) => {
+    response.json(persons);
+  });
 });
 
 app.get("/api/info", (request, response) => {
@@ -57,13 +62,9 @@ app.get("/api/info", (request, response) => {
 });
 
 app.get("/api/persons/:id", (request, response) => {
-  const id = request.params.id;
-  const person = persons.find((person) => person.id === id);
-  if (person) {
+  Person.findById(request.params.id).then((person) => {
     response.json(person);
-  } else {
-    response.status(404).end;
-  }
+  });
 });
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -86,43 +87,58 @@ const generateId = () => {
 };
 
 app.post("/api/persons", (request, response) => {
-  let msg = "";
   const body = request.body;
-  const missingEntry = !body.name || !body.number;
+  // let msg = "";
+  // const missingEntry = !body.name || !body.number;
 
-  const nameExists = persons.find((person) => person.name === body.name);
+  // const nameExists = persons.find((person) => person.name === body.name);
 
-  if (missingEntry) {
-    if (!body.name) {
-      msg = "name is not provided";
-    } else if (!body.number) {
-      msg = "number is not provided";
-    }
+  // if (missingEntry) {
+  //   if (!body.name) {
+  //     msg = "name is not provided";
+  //   } else if (!body.number) {
+  //     msg = "number is not provided";
+  //   }
 
-    return response.status(400).json({
-      error: msg,
+  //   return response.status(400).json({
+  //     error: msg,
+  //   });
+  // }
+
+  // if (nameExists) {
+  //   msg = "name must be unique";
+  //   return response.status(400).json({
+  //     error: msg,
+  //   });
+  // } else {
+  //   const person = {
+  //     // id: generateId(),
+  //     id: String(persons.length + 1),
+  //     name: body.name,
+  //     number: body.number,
+  //   };
+
+  //   persons = persons.concat(person);
+  //   response.json(person);
+  // }
+
+  const person = new Person({
+    name: body.name,
+    number: body.number,
+  });
+
+  if (body.name === undefined) {
+    response.status(400).json({
+      error: "name is missing",
     });
   }
 
-  if (nameExists) {
-    msg = "name must be unique";
-    return response.status(400).json({
-      error: msg,
-    });
-  } else {
-    const person = {
-      // id: generateId(),
-      id: String(persons.length + 1),
-      name: body.name,
-      number: body.number,
-    };
-
-    persons = persons.concat(person);
-    response.json(person);
-  }
+  person.save().then((savedPerson) => {
+    response.json(savedPerson);
+  });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
