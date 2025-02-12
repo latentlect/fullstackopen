@@ -37,26 +37,36 @@ const PersonForm = ({ persons, setPersons }) => {
               )
             )
           )
-          .catch(error => {
-             setPromptMessage(`${newName} was already removed from the server`)
-             setTimeout(() => {
-              setPromptMessage("")
-             }, 5000)
+          .catch((error) => {
+            setPromptMessage(error.response.data.error);
+            setNewName("");
+            setNewNumber("");
+            setTimeout(() => {
+              setPromptMessage("");
+            }, 5000);
           });
       }
     } else if (personExits) {
       alert(`${newName} is already added to phonebook`);
       return;
     } else {
-      personService.create(newPerson).then((returnedPerson) => {
-        setPersons(persons.concat(returnedPerson));
-        setNewName("");
-        setNewNumber("");
-        setPromptMessage(`Added ${newName}`);
-        setTimeout(() => {
-          setPromptMessage("");
-        }, 5000);
-      });
+      personService
+        .create(newPerson)
+        .then((returnedPerson) => {
+          setPersons(persons.concat(returnedPerson));
+          setNewName("");
+          setNewNumber("");
+          setPromptMessage(`Added ${newName}`);
+        })
+        .catch((error) => {
+          setPromptMessage(error.response.data.error);
+          setNewName("");
+          setNewNumber("");
+          console.log(error.response.data.error);
+          setTimeout(() => {
+            setPromptMessage("");
+          }, 5000);
+        });
     }
   };
 
